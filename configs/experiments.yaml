@@ -1,0 +1,40 @@
+# Master experiment config — defines all benchmark runs
+#
+# Each experiment inherits from 'defaults' and can override any field.
+# Adding a new model = adding 3-4 lines here. No code changes needed.
+
+defaults:
+  imgsz: 640
+  epochs: 50
+  patience: 10
+  seed: 42
+  optimizer: auto
+  workers: 8
+  device: 0                  # GPU 0 (auto-fallback to CPU if unavailable)
+  batch: -1                  # auto-detect from VRAM
+  data: configs/dataset.yaml
+  deterministic: true
+  save: true
+  plots: true
+
+experiments:
+  yolo11s_baseline:
+    description: "YOLOv11s baseline — standard 3-scale detection head"
+    model: yolo11s.pt
+    strategy: baseline
+
+  yolo11s_p2:
+    description: "YOLOv11s + P2 head — architectural stride-4 small-object scale"
+    model: models/yolo11s-p2.yaml
+    pretrained: yolo11s.pt
+    strategy: architectural_p2
+
+  yolo26s:
+    description: "YOLO26s — NMS-free with STAL + ProgLoss small-object training"
+    model: yolo26s.pt
+    strategy: stal_progloss
+
+  yolo26n:
+    description: "YOLO26n — nano speed variant of YOLO26"
+    model: yolo26n.pt
+    strategy: stal_progloss_nano

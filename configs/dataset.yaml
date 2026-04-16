@@ -1,0 +1,10 @@
+# Dataset config for Ultralytics YOLO training
+# MMFW-UAV derived — 3,558 matched pairs, single class, stratified 80/10/10
+
+path: ../data
+train: images/train
+val: images/val
+test: images/test
+
+names:
+  0: Fixed_Wing_UAV

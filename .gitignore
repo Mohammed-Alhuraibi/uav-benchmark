@@ -1,0 +1,34 @@
+# Dataset (large files — downloaded on target machine)
+data/images/
+data/labels/
+data/*.cache
+
+# Training outputs (weights, logs, plots)
+runs/
+!runs/.gitkeep
+
+# Model weights
+*.pt
+*.onnx
+*.hef
+*.engine
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+*.egg-info/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Reports are generated but we keep the directory
+!reports/.gitkeep

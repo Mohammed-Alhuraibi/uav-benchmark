@@ -1,0 +1,23 @@
+# Custom Albumentations transforms applied during training
+#
+# These simulate deployment conditions (lower camera quality, haze, noise)
+# that the stock YOLO augmentations don't cover.
+#
+# Applied probabilistically — each transform fires independently.
+
+transforms:
+  - name: CLAHE
+    params:
+      clip_limit: 2.0
+      tile_grid_size: [8, 8]
+    p: 0.3
+
+  - name: GaussianBlur
+    params:
+      blur_limit: [3, 7]
+    p: 0.3
+
+  - name: GaussNoise
+    params:
+      var_limit: [5.0, 25.0]
+    p: 0.2
