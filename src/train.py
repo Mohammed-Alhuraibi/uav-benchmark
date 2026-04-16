@@ -1,7 +1,11 @@
 """Train a single YOLO experiment.
 
 Reads experiment definitions from configs/experiments.yaml and applies
-shared augmentation config from configs/augmentation.yaml.
+augmentation config from configs/augmentation.yaml (or a per-experiment
+override via the 'augmentation' field).
+
+Priority order: defaults → augmentation config → experiment overrides.
+Experiment-level values always win, enabling ablation studies.
 
 Usage:
     python src/train.py --experiment yolo11s_baseline
@@ -25,8 +29,9 @@ def load_config() -> dict:
         return yaml.safe_load(f)
 
 
-def load_augmentation() -> dict:
-    with open(ROOT / "configs" / "augmentation.yaml") as f:
+def load_augmentation(aug_path: str | None = None) -> dict:
+    path = ROOT / (aug_path or "configs/augmentation.yaml")
+    with open(path) as f:
         return yaml.safe_load(f)
 
 
@@ -58,20 +63,25 @@ def train_experiment(name: str, config: dict) -> Path:
     defaults = config["defaults"]
     exp = config["experiments"][name]
 
-    # Merge defaults with experiment overrides
+    # Build train args: defaults → augmentation → experiment overrides
+    # This order ensures experiment-level values always win (for ablation)
     train_args = {**defaults}
+
+    # Load augmentation config (experiment can specify a different file)
+    aug_path = exp.get("augmentation")
+    aug = load_augmentation(aug_path)
+    train_args.update(aug)
+
+    # Experiment overrides go LAST so they win over augmentation defaults
+    skip_keys = ("description", "strategy", "pretrained", "augmentation")
     for k, v in exp.items():
-        if k not in ("description", "strategy", "pretrained"):
+        if k not in skip_keys:
             train_args[k] = v
 
     # Resolve paths
     model_path = resolve_model_path(train_args.pop("model"))
     data_path = str(ROOT / train_args.pop("data"))
     train_args["data"] = data_path
-
-    # Load augmentation config
-    aug = load_augmentation()
-    train_args.update(aug)
 
     # Output config
     train_args["project"] = str(ROOT / "runs")

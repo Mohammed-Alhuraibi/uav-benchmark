@@ -1,7 +1,14 @@
 # Master experiment config — defines all benchmark runs
 #
+# Priority: defaults → augmentation config → experiment overrides.
+# Experiment-level values always win, enabling per-experiment ablation.
+#
 # Each experiment inherits from 'defaults' and can override any field.
 # Adding a new model = adding 3-4 lines here. No code changes needed.
+#
+# Per-experiment augmentation override:
+#   augmentation: configs/augmentation_none.yaml   # use a different aug file
+#   mosaic: 0.0                                    # or override individual values
 
 defaults:
   imgsz: 640
@@ -38,3 +45,33 @@ experiments:
     description: "YOLO26n — nano speed variant of YOLO26"
     model: yolo26n.pt
     strategy: stal_progloss_nano
+
+# ── Round 2: Augmentation ablation (uncomment after Round 1 winner is known) ──
+# Replace WINNER.pt / WINNER_MODEL with the Round 1 winning model.
+#
+#  winner_no_aug:
+#    description: "Winner with zero augmentation (ablation baseline)"
+#    model: WINNER.pt
+#    augmentation: configs/augmentation_none.yaml
+#    strategy: ablation
+#
+#  winner_mosaic_only:
+#    description: "Winner with only mosaic augmentation"
+#    model: WINNER.pt
+#    augmentation: configs/augmentation_none.yaml
+#    mosaic: 0.5
+#    close_mosaic: 10
+#    strategy: ablation
+#
+#  winner_clahe_only:
+#    description: "Winner with only CLAHE (albumentations, no YOLO aug)"
+#    model: WINNER.pt
+#    augmentation: configs/augmentation_none.yaml
+#    strategy: ablation
+#    # Note: CLAHE is controlled via albumentations.yaml, not here.
+#    # Create configs/albumentations_clahe_only.yaml for this experiment.
+#
+#  winner_full_aug:
+#    description: "Winner with full augmentation suite (should match Round 1)"
+#    model: WINNER.pt
+#    strategy: ablation

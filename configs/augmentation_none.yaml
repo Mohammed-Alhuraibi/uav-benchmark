@@ -1,0 +1,30 @@
+# Zero augmentation — clean baseline for ablation studies
+#
+# Use this to measure raw model performance without any training-time
+# augmentation. Compare against augmentation.yaml results to quantify
+# how much each augmentation contributes.
+
+# Mosaic & mixing
+mosaic: 0.0
+mixup: 0.0
+copy_paste: 0.0
+
+# Geometric
+scale: 0.0
+translate: 0.0
+fliplr: 0.0
+flipud: 0.0
+degrees: 0.0
+perspective: 0.0
+shear: 0.0
+
+# Color
+hsv_h: 0.0
+hsv_s: 0.0
+hsv_v: 0.0
+
+# Erasing
+erasing: 0.0
+
+# Mosaic close-out (irrelevant when mosaic=0, but explicit)
+close_mosaic: 0
