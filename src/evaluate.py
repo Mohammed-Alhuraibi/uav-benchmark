@@ -32,6 +32,18 @@ def load_config() -> dict:
         return yaml.safe_load(f)
 
 
+def resolve_data_path(config: dict) -> str:
+    """Resolve dataset YAML to absolute path so YOLO doesn't depend on CWD."""
+    dataset_yaml = ROOT / config["defaults"]["data"]
+    with open(dataset_yaml) as f:
+        ds_config = yaml.safe_load(f)
+    ds_config["path"] = str((dataset_yaml.parent / ds_config["path"]).resolve())
+    resolved_yaml = ROOT / "configs" / ".dataset_resolved.yaml"
+    with open(resolved_yaml, "w") as f:
+        yaml.dump(ds_config, f)
+    return str(resolved_yaml)
+
+
 def find_best_weights(experiment: str) -> Path:
     weights = ROOT / "runs" / experiment / "weights" / "best.pt"
     if not weights.exists():
@@ -137,7 +149,7 @@ def evaluate_experiment(name: str, config: dict) -> dict:
 
     weights = find_best_weights(name)
     model = YOLO(str(weights))
-    data_path = str(ROOT / config["defaults"]["data"])
+    data_path = resolve_data_path(config)
 
     print(f"\n{'='*60}")
     print(f" Evaluating: {name}")

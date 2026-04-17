@@ -80,8 +80,18 @@ def train_experiment(name: str, config: dict) -> Path:
 
     # Resolve paths
     model_path = resolve_model_path(train_args.pop("model"))
-    data_path = str(ROOT / train_args.pop("data"))
-    train_args["data"] = data_path
+
+    # Resolve dataset YAML with absolute path so YOLO doesn't depend on CWD.
+    # dataset.yaml uses 'path: ../data' (relative to yaml location), but YOLO
+    # resolves it relative to CWD which varies across environments (Colab, SSH, etc).
+    dataset_yaml = ROOT / train_args.pop("data")
+    with open(dataset_yaml) as f:
+        ds_config = yaml.safe_load(f)
+    ds_config["path"] = str((dataset_yaml.parent / ds_config["path"]).resolve())
+    resolved_yaml = ROOT / "configs" / ".dataset_resolved.yaml"
+    with open(resolved_yaml, "w") as f:
+        yaml.dump(ds_config, f)
+    train_args["data"] = str(resolved_yaml)
 
     # Output config
     train_args["project"] = str(ROOT / "runs")

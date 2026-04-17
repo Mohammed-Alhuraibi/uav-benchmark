@@ -2,6 +2,7 @@
 data/images/
 data/labels/
 data/*.cache
+configs/.dataset_resolved.yaml
 
 # Training outputs (weights, logs, plots)
 runs/
