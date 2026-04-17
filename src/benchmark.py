@@ -30,7 +30,7 @@ def verify_gpu() -> dict:
     if info["cuda"]:
         info["gpu_name"] = torch.cuda.get_device_name(0)
         props = torch.cuda.get_device_properties(0)
-        info["vram_gb"] = round(props.total_mem / 1e9, 1)
+        info["vram_gb"] = round(getattr(props, "total_memory", getattr(props, "total_mem", 0)) / 1e9, 1)
         info["cuda_version"] = torch.version.cuda
         print(f"  GPU:  {info['gpu_name']}")
         print(f"  VRAM: {info['vram_gb']} GB")
