@@ -27,7 +27,10 @@ bash setup.sh
 #    Download from cloud and place in data/
 #    See data/README.md for expected structure
 
-# 4. Run full benchmark
+# 4. Verify setup (GPU + dataset + configs)
+python src/benchmark.py --verify-only
+
+# 5. Run full benchmark (Round 1: model comparison)
 python src/benchmark.py
 
 # Or run a single experiment
@@ -35,35 +38,81 @@ python src/train.py --experiment yolo11s_baseline
 python src/evaluate.py --experiment yolo11s_baseline
 ```
 
+## Workflow
+
+The benchmark follows a two-round approach:
+
+### Round 1: Find the best model
+All 4 models train with identical augmentation. Compares architectures only.
+```bash
+python src/benchmark.py
+```
+
+### Round 2: Find the best preprocessing
+After Round 1, uncomment ablation experiments in `configs/experiments.yaml`,
+replacing `WINNER.pt` with the Round 1 winner. Compares augmentation strategies.
+```bash
+python src/benchmark.py --start-from winner_no_aug
+```
+
+### Export for Hailo deployment
+Export the winning model to ONNX and prepare for Hailo INT8 quantization.
+```bash
+python src/export.py --experiment <winner> --validate
+python src/export.py --calibration-data
+python src/export.py --hailo-guide
+```
+
+### Test inference on your PC
+Test the model with webcam, video, or test images before deploying to the Pi.
+```bash
+# Test on test images (with visualization)
+python src/inference.py --model runs/<winner>/weights/best.pt --source test
+
+# Test with webcam (show plane images to camera)
+python src/inference.py --model runs/<winner>/weights/best.pt --source 0
+
+# Benchmark inference speed
+python src/inference.py --model runs/<winner>/weights/best.pt --benchmark
+```
+
 ## Project Structure
 
 ```
 uav-benchmark/
 ├── configs/
-│   ├── dataset.yaml            # Data paths for Ultralytics
-│   ├── augmentation.yaml       # Tuned augmentation (shared across all experiments)
-│   ├── albumentations.yaml     # Custom transforms: CLAHE, blur, noise
-│   └── experiments.yaml        # All experiment definitions
+│   ├── dataset.yaml              # Data paths for Ultralytics
+│   ├── augmentation.yaml         # Training augmentation (tuned for small objects)
+│   ├── augmentation_none.yaml    # Zero augmentation (Round 2 ablation baseline)
+│   ├── albumentations.yaml       # Custom transforms: CLAHE, blur, noise
+│   ├── experiments.yaml          # All experiment definitions + Round 2 templates
+│   └── deployment.yaml           # Camera, Hailo, and competition rule specs
 ├── models/
-│   └── yolo11s-p2.yaml         # Custom YOLOv11s + P2 head architecture
-├── data/                       # Dataset (gitignored, populate on target machine)
+│   └── yolo11s-p2.yaml           # Custom YOLOv11s + P2 head architecture
+├── data/                         # Dataset (gitignored, populate on target machine)
 ├── src/
-│   ├── benchmark.py            # Main orchestrator
-│   ├── train.py                # Single experiment trainer
-│   ├── evaluate.py             # Test evaluation with competition-relevant metrics
-│   ├── report.py               # Comparison tables + visualizations
-│   └── albumentations_config.py
-├── docs/                       # Competition specification documents
-├── runs/                       # Training outputs (gitignored)
-└── reports/                    # Generated benchmark reports
+│   ├── benchmark.py              # Main orchestrator (verify → train → eval → report)
+│   ├── train.py                  # Single experiment trainer
+│   ├── evaluate.py               # Test evaluation with competition-relevant metrics
+│   ├── report.py                 # Comparison tables + visualizations
+│   ├── export.py                 # ONNX export + Hailo calibration + deployment guide
+│   ├── inference.py              # Reference Pi inference pipeline + webcam testing
+│   └── albumentations_config.py  # Custom Albumentations transform loader
+├── docs/                         # Competition specification documents
+├── runs/                         # Training outputs (gitignored)
+└── reports/                      # Generated benchmark reports
 ```
 
-## Hardware Requirements
+## Hardware
 
-- NVIDIA GPU with 4+ GB VRAM (RTX 3050 minimum, RTX 4060+ recommended)
+### Training / Benchmarking
+- NVIDIA GPU with 4+ GB VRAM (recommended) or CPU-only (slower)
 - 16+ GB RAM
 - Ubuntu 22.04 / 24.04 LTS
-- CUDA 12.x compatible driver
+
+### Deployment Target
+- Raspberry Pi 5 + Hailo-8L (13 TOPS, INT8)
+- Pi Camera Module 3 (IMX708, 2304x1296 @ 56fps)
 
 ## Dataset
 
@@ -76,7 +125,6 @@ See `data/README.md` for setup instructions.
 After benchmark completes, find results in `reports/`:
 - `comparison_table.csv` — all models x all metrics
 - `loss_curves.png` — overlaid training loss curves
+- `metric_curves.png` — mAP progression across epochs
 - `visual_grid.png` — same test images, predictions from all models
-- `precision_recall.png` — overlaid P/R curves
-- `per_bucket_heatmap.png` — per-sortie mAP breakdown
-- `benchmark_summary.md` — formatted summary with decision recommendation
+- `benchmark_summary.md` — formatted summary with key findings
