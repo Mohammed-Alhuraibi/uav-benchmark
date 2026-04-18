@@ -46,32 +46,50 @@ experiments:
     model: yolo26n.pt
     strategy: stal_progloss_nano
 
-# ── Round 2: Augmentation ablation (uncomment after Round 1 winner is known) ──
-# Replace WINNER.pt / WINNER_MODEL with the Round 1 winning model.
-#
-#  winner_no_aug:
-#    description: "Winner with zero augmentation (ablation baseline)"
-#    model: WINNER.pt
-#    augmentation: configs/augmentation_none.yaml
-#    strategy: ablation
-#
-#  winner_mosaic_only:
-#    description: "Winner with only mosaic augmentation"
-#    model: WINNER.pt
-#    augmentation: configs/augmentation_none.yaml
-#    mosaic: 0.5
-#    close_mosaic: 10
-#    strategy: ablation
-#
-#  winner_clahe_only:
-#    description: "Winner with only CLAHE (albumentations, no YOLO aug)"
-#    model: WINNER.pt
-#    augmentation: configs/augmentation_none.yaml
-#    strategy: ablation
-#    # Note: CLAHE is controlled via albumentations.yaml, not here.
-#    # Create configs/albumentations_clahe_only.yaml for this experiment.
-#
-#  winner_full_aug:
-#    description: "Winner with full augmentation suite (should match Round 1)"
-#    model: WINNER.pt
-#    strategy: ablation
+  # ── Round 2: Augmentation ablation on yolo11s_p2 (Round 1 winner) ──
+  # Each experiment trains from the same COCO pretrained weights with
+  # different augmentation. Comparing mAP tells us what each augmentation adds.
+
+  p2_no_aug:
+    description: "P2 with zero augmentation (ablation baseline)"
+    model: models/yolo11s-p2.yaml
+    pretrained: yolo11s.pt
+    augmentation: configs/augmentation_none.yaml
+    strategy: ablation
+
+  p2_mosaic_only:
+    description: "P2 with only mosaic (most impactful single augmentation)"
+    model: models/yolo11s-p2.yaml
+    pretrained: yolo11s.pt
+    augmentation: configs/augmentation_none.yaml
+    mosaic: 0.5
+    close_mosaic: 10
+    strategy: ablation
+
+  p2_geometric:
+    description: "P2 with spatial augmentations (mosaic + scale + translate + fliplr)"
+    model: models/yolo11s-p2.yaml
+    pretrained: yolo11s.pt
+    augmentation: configs/augmentation_none.yaml
+    mosaic: 0.5
+    scale: 0.5
+    translate: 0.1
+    fliplr: 0.5
+    close_mosaic: 10
+    strategy: ablation
+
+  p2_color:
+    description: "P2 with only color augmentation (HSV shifts)"
+    model: models/yolo11s-p2.yaml
+    pretrained: yolo11s.pt
+    augmentation: configs/augmentation_none.yaml
+    hsv_h: 0.015
+    hsv_s: 0.5
+    hsv_v: 0.3
+    strategy: ablation
+
+  p2_full_aug:
+    description: "P2 with full augmentation suite (should match Round 1 yolo11s_p2)"
+    model: models/yolo11s-p2.yaml
+    pretrained: yolo11s.pt
+    strategy: ablation
