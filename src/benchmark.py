@@ -124,10 +124,28 @@ def run_benchmark(start_from: str | None = None) -> None:
         print(f"\n--- Experiment {i}/{len(experiments)}: {name} ---")
         exp_start = time.time()
 
-        # Skip if already trained
-        weights = ROOT / "runs" / name / "weights" / "best.pt"
-        if weights.exists():
-            print(f"  Weights already exist at {weights}, skipping training.")
+        # Check training state
+        best_pt = ROOT / "runs" / name / "weights" / "best.pt"
+        last_pt = ROOT / "runs" / name / "weights" / "last.pt"
+        results_csv = ROOT / "runs" / name / "results.csv"
+
+        if best_pt.exists() and results_csv.exists():
+            # Check if training completed (last epoch reached or early stopped)
+            import pandas as pd
+            df = pd.read_csv(results_csv)
+            epochs_done = len(df)
+            max_epochs = config["defaults"].get("epochs", 50)
+            patience = config["defaults"].get("patience", 10)
+
+            if epochs_done >= max_epochs or (last_pt.exists() and best_pt.stat().st_mtime >= last_pt.stat().st_mtime):
+                print(f"  Training complete ({epochs_done} epochs). Skipping.")
+                print(f"  (Delete runs/{name}/ to retrain)")
+                continue
+            else:
+                print(f"  Partial training found ({epochs_done}/{max_epochs} epochs). Resuming...")
+
+        elif best_pt.exists() and not last_pt.exists():
+            print(f"  Weights already exist at {best_pt}, skipping training.")
             print(f"  (Delete runs/{name}/ to retrain)")
             continue
 

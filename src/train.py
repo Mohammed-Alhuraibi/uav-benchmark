@@ -98,20 +98,30 @@ def train_experiment(name: str, config: dict) -> Path:
     train_args["name"] = name
     train_args["exist_ok"] = True
 
-    # Load model
-    if "pretrained" in exp:
-        # Custom architecture with pretrained weight transfer
-        model = YOLO(model_path)
-        train_args["pretrained"] = exp["pretrained"]
+    # Check for resumable interrupted training
+    last_pt = ROOT / "runs" / name / "weights" / "last.pt"
+    if last_pt.exists():
+        print(f"\n{'='*60}")
+        print(f" Resuming: {name}")
+        print(f" From:     {last_pt}")
+        print(f" {'='*60}\n")
+        model = YOLO(str(last_pt))
+        model.train(resume=True)
     else:
-        model = YOLO(model_path)
+        # Load model fresh
+        if "pretrained" in exp:
+            # Custom architecture with pretrained weight transfer
+            model = YOLO(model_path)
+            train_args["pretrained"] = exp["pretrained"]
+        else:
+            model = YOLO(model_path)
 
-    print(f"\n{'='*60}")
-    print(f" Training: {name}")
-    print(f" Model:    {model_path}")
-    print(f" {'='*60}\n")
+        print(f"\n{'='*60}")
+        print(f" Training: {name}")
+        print(f" Model:    {model_path}")
+        print(f" {'='*60}\n")
 
-    model.train(**train_args)
+        model.train(**train_args)
 
     run_dir = ROOT / "runs" / name
     print(f"\nTraining complete. Results in: {run_dir}")
