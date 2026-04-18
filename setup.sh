@@ -78,7 +78,8 @@ print(f'  torch:          {torch.__version__}')
 print(f'  CUDA available: {torch.cuda.is_available()}')
 if torch.cuda.is_available():
     print(f'  GPU device:     {torch.cuda.get_device_name(0)}')
-    vram_gb = torch.cuda.get_device_properties(0).total_mem / 1e9
+    props = torch.cuda.get_device_properties(0)
+    vram_gb = getattr(props, 'total_memory', getattr(props, 'total_mem', 0)) / 1e9
     print(f'  VRAM:           {vram_gb:.1f} GB')
     # Auto-suggest batch size
     if vram_gb >= 8:
