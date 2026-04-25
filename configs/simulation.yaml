@@ -1,0 +1,46 @@
+# Simulation-specific configuration.
+#
+# Competition rules + camera specs live in deployment.yaml — we don't
+# duplicate them here. This file holds knobs that only the simulation
+# needs: Kalman noise model, controller PID gains, HUD layout, logger
+# channels, and the synthetic server-time offset.
+
+kalman:
+  q_pos: 1.0       # process noise on cx, cy (per sqrt(s))
+  q_size: 0.5      # process noise on w, h  (per sqrt(s))
+  q_vel: 20.0      # process noise on vx, vy (per sqrt(s))
+  r_pos: 2.0       # measurement noise on cx, cy (px)
+  r_size: 4.0      # measurement noise on w, h  (px)
+
+controller:
+  # Each axis: P-I-D gains, output saturation, integral clamp, optional
+  # slew limit (output-units per second). out_min/out_max default to ±1
+  # so it's omitted for the attitude axes; throttle uses ±0.5 (delta
+  # around throttle_base).
+  roll:     { kp: 0.8, ki: 0.05, kd: 0.10, slew_limit_per_s: 6.0 }
+  pitch:    { kp: 0.7, ki: 0.05, kd: 0.10, slew_limit_per_s: 6.0 }
+  yaw:      { kp: 0.3, ki: 0.02, kd: 0.05, slew_limit_per_s: 6.0 }
+  throttle:
+    kp: 2.0
+    ki: 0.10
+    kd: 0.0
+    out_min: -0.5
+    out_max:  0.5
+    integral_min: -0.5
+    integral_max:  0.5
+    slew_limit_per_s: 1.0
+  target_size_ratio: 0.10   # desired max-axis ratio of target / frame
+  throttle_base:     0.55   # nominal cruise
+
+# Synthetic "server time" displayed in HUD top-right. Real wall clock isn't
+# meaningful for offline video processing — we offset from this anchor by
+# (frame_idx / fps) so the time advances naturally during the run.
+server_time:
+  start_h: 12
+  start_m: 0
+  start_s: 0
+
+logger:
+  # Subset of {meta, frame, det, ctrl, lock}. Drop "det" if you only want
+  # phase transitions and don't care about every frame's bboxes.
+  channels: [meta, frame, det, ctrl, lock]

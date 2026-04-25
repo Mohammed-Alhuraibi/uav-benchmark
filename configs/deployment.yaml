@@ -9,30 +9,38 @@
 #   - Hailo-8L datasheet (13 TOPS, INT8 only)
 
 camera:
-  sensor: IMX708               # Pi Camera Module 3
-  resolution: [2304, 1296]     # operational capture (16:9, 56fps)
+  sensor: IMX708 # Pi Camera Module 3
+  resolution: [2304, 1296] # operational capture (16:9, 56fps)
   fps: 56
 
 inference:
-  imgsz: 640                   # model input size (matches training)
-  det_conf: 0.25               # detection threshold — keep low to feed tracker
-  lock_conf: 0.60              # lock-on threshold — keep high to avoid -30pt penalty
-  iou_thresh: 0.45             # NMS overlap (ignored by NMS-free models like YOLO26)
-  use_clahe: false             # toggle after Round 2 ablation results
+  imgsz: 640 # model input size (matches training)
+  det_conf: 0.35 # detection threshold — reject obvious noise
+  lock_conf: 0.75 # lock-on threshold — real UAVs score 0.90+, avoids -30pt penalty
+  iou_thresh: 0.45 # NMS overlap (ignored by NMS-free models like YOLO26)
+  use_clahe: false # tested on P-51 sim — amplifies film grain, no detection benefit
 
 hailo:
-  target: hailo8l              # 13 TOPS, INT8 only
+  target: hailo8l # 13 TOPS, INT8 only
   quantization: int8
-  calibration_images: 100      # subset of training data for INT8 calibration
-  calibration_source: train    # must be training set, never val/test (avoids data leakage)
+  calibration_images: 100 # subset of training data for INT8 calibration
+  calibration_source: train # must be training set, never val/test (avoids data leakage)
 
 tracking:
-  max_dropout_frames: 12       # ~200ms at 56fps camera rate
-  lock_on_frames: 224          # 4s × 56fps continuous detection to confirm lock
+  max_dropout_frames: 12 # ~200ms at 56fps camera rate
+  lock_on_frames: 224 # 4s × 56fps continuous detection to confirm lock
 
 competition:
-  lock_on_seconds: 4           # continuous detection required before scoring
-  min_bbox_ratio: 0.05         # reject if bbox < 5% of image on BOTH axes
-  dropout_tolerance_ms: 200    # brief gaps below this don't break lock
-  false_lock_penalty: -30      # points lost per false lock-on
-  telemetry_hz: 2              # max position reports per second to ground station
+  lock_on_seconds: 4 # continuous detection required before scoring
+  min_bbox_ratio: 0.06 # reject if bbox < 5% of image on BOTH axes
+  dropout_tolerance_ms: 200 # brief gaps below this don't break lock
+  false_lock_penalty: -30 # points lost per false lock-on
+  telemetry_hz: 2 # max position reports per second to ground station
+
+  # Zone definitions from spec Figure 2.
+  # AV: Target Hit Area — target must be within this region.
+  av_margin_x: 0.25 # 25% horizontal margin each side
+  av_margin_y: 0.10 # 10% vertical margin top/bottom
+  # AH: Lockdown Quadrilateral — target CENTER must stay inside for lock-on
+  ah_width: 0.35 # 35% of frame width, centered (per spec Figure 2)
+  ah_height: 0.50 # 50% of frame height, centered

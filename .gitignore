@@ -4,6 +4,10 @@ data/labels/
 data/*.cache
 configs/.dataset_resolved.yaml
 
+# Simulation videos (downloaded on demand, see scripts/fetch_sim_video.sh)
+data/sim/raw/
+data/sim/clips/
+
 # Training outputs (weights, logs, plots)
 runs/
 !runs/.gitkeep
